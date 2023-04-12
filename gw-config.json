@@ -1,0 +1,132 @@
+{
+  "$schema": "https://www.krakend.io/schema/v3.json",
+  "version": 3,
+  "name": "infratographer api-gateway",
+  "port": 7600,
+  "timeout": "2s",
+  "plugin": {
+    "pattern": ".so",
+    "folder": "/opt/infratographer/modules/"
+  },
+  "endpoints": [
+    {
+      "endpoint": "/v1/tenants",
+      "method": "GET",
+      "input_headers": [
+        "Infratographer-Auth"
+      ],
+      "backend": [
+        {
+          "host": ["http://app:7601"],
+          "url_pattern": "/api/v1/tenants",
+          "is_collection": true,
+          "mapping": {
+            "collection": "tenants"
+          }
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/tenants",
+      "method": "POST",
+      "input_headers": [
+        "Infratographer-Auth"
+      ],
+      "backend": [
+        {
+          "host": ["http://app:7601"],
+          "url_pattern": "/api/v1/tenants"
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/tenants/{id}/tenants",
+      "method": "POST",
+      "input_headers": [
+        "Infratographer-Auth"
+      ],
+      "backend": [
+        {
+          "encoding": "json",
+          "host": ["http://app:7601"],
+          "url_pattern": "/api/v1/tenants/{id}/tenants"
+
+        }
+      ]
+    },
+    {
+      "endpoint": "/headers",
+      "method": "GET",
+      "input_headers": [
+        "Infratographer-Auth"
+      ],
+      "backend": [
+        {
+          "encoding": "json",
+          "host": ["http://app:7601"],
+          "url_pattern": "/api/v1/tenants/123"
+        }
+      ]
+    },
+    {
+      "endpoint": "/versions",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://app:7601"],
+          "url_pattern": "/version"
+        },
+        {
+          "host": ["http://app:7602"],
+          "url_pattern": "/version",
+          "allow": [
+            "built_at",
+            "version"
+          ],
+          "group": "the-other-service"
+        },
+        {
+          "host": ["http://app:7602"],
+          "url_pattern": "/version",
+          "allow": [
+            "built_at"
+          ]
+        }
+      ]
+    }
+  ],
+  "extra_config": {
+    "plugin/http-server": {
+      "name": ["infratographer/identity-auth"],
+      "infratographer/identity-auth": {
+          "timeout_in_sec": 1,
+          "auth_endpoint": "http://app:7601/api/v1/auth/request"
+      }
+    },
+    "security/cors": {
+      "allow_origins": []
+    },
+    "telemetry/opencensus": {
+      "sample_rate": 100,
+      "reporting_period": 1,
+      "enabled_layers": {
+          "backend": true,
+          "router": true
+      },
+      "exporters": {
+        "prometheus": {
+            "port": 9091,
+            "tag_host": true,
+            "tag_path": true,
+            "tag_method": true,
+            "tag_statuscode": true
+        },
+          "jaeger": {
+            "endpoint": "http://192.168.99.100:14268/api/traces",
+            "service_name":"krakend",
+            "buffer_max_count": 1
+          }
+      }
+    }
+  }
+}
