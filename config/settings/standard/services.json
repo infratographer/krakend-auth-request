@@ -1,0 +1,4 @@
+{
+  "categoryapi": "http://host.docker.internal:5000",
+  "productapi": "http://host.docker.interal:5001"
+}
